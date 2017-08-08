@@ -34,11 +34,23 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func PrepareCollection(session *mgo.Session, database string, collection string) (*mgo.Collection, chan struct{}) {
-	shutdown := make(chan struct{})
-	s := session.Copy()
-	RefCollection := s.DB(database).C(collection)
+type CollectionInfo struct {
+	session     *mgo.Session
+	database    string
+	collection  string
+	index       *mgo.Index
+}
 
+func PrepareCollection(ops *CollectionInfo) (*mgo.Collection, chan struct{}) {
+	shutdown := make(chan struct{})
+	s := ops.session.Copy()
+	RefCollection := s.DB(ops.database).C(ops.collection)
+
+	if ops.index != nil {
+		if err := RefCollection.EnsureIndex(*ops.index); err != nil {
+			panic(err)
+		}
+	}
 	go func() {
 		select {
 		case <-shutdown:
@@ -60,8 +72,8 @@ func IsValidObjectHex(id string) bool {
 }
 
 // GetByID get a single record by ID
-func GetByID(session *mgo.Session, database string, collection string, id string, i interface{}) {
-	col, shutdown := PrepareCollection(session, database, collection)
+func GetByID(ops *CollectionInfo, id string, i interface{}) {
+	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
@@ -70,8 +82,8 @@ func GetByID(session *mgo.Session, database string, collection string, id string
 }
 
 // GetUniqueOne get a single record by query
-func GetUniqueOne(session *mgo.Session, database string, collection string, q interface{}, doc interface{}) error {
-	col, shutdown := PrepareCollection(session, database, collection)
+func GetUniqueOne(ops *CollectionInfo, q interface{}, doc interface{}) error {
+	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
@@ -80,8 +92,8 @@ func GetUniqueOne(session *mgo.Session, database string, collection string, q in
 }
 
 // GetMany get multiple records based on a condition
-func GetMany(session *mgo.Session, database string, collection string, q interface{}, doc interface{}) error {
-	col, shutdown := PrepareCollection(session, database, collection)
+func GetMany(ops *CollectionInfo, q interface{}, doc interface{}) error {
+	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
@@ -90,8 +102,8 @@ func GetMany(session *mgo.Session, database string, collection string, q interfa
 }
 
 // Insert add new documents to a collection.
-func Insert(session *mgo.Session, database string, collection string, doc interface{}) error {
-	col, shutdown := PrepareCollection(session, database, collection)
+func Insert(ops *CollectionInfo, doc interface{}) error {
+	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
@@ -100,8 +112,8 @@ func Insert(session *mgo.Session, database string, collection string, doc interf
 }
 
 // UpdateByQueryField modify all eligible documents.
-func UpdateByQueryField(session *mgo.Session, database string, collection string, q interface{}, field string, value interface{}) (*mgo.ChangeInfo, error) {
-	col, shutdown := PrepareCollection(session, database, collection)
+func UpdateByQueryField(ops *CollectionInfo, q interface{}, field string, value interface{}) (*mgo.ChangeInfo, error) {
+	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
@@ -112,8 +124,8 @@ func UpdateByQueryField(session *mgo.Session, database string, collection string
 }
 
 // Update modify existing documents in a collection.
-func Update(session *mgo.Session, database string, collection string, query interface{}, i interface{}) error {
-	col, shutdown := PrepareCollection(session, database, collection)
+func Update(ops *CollectionInfo, query interface{}, i interface{}) error {
+	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
@@ -123,8 +135,8 @@ func Update(session *mgo.Session, database string, collection string, query inte
 
 // Upsert creates a new document and inserts it if no documents match the specified filter.
 // If there are matching documents, then the operation modifies or replaces the matching document or documents.
-func Upsert(session *mgo.Session, database string, collection string, query interface{}, i interface{}) (*mgo.ChangeInfo, error) {
-	col, shutdown := PrepareCollection(session, database, collection)
+func Upsert(ops *CollectionInfo, query interface{}, i interface{}) (*mgo.ChangeInfo, error) {
+	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
@@ -135,8 +147,8 @@ func Upsert(session *mgo.Session, database string, collection string, query inte
 }
 
 // Delete remove documents from a collection.
-func Delete(session *mgo.Session, database string, collection string, query interface{}) error {
-	col, shutdown := PrepareCollection(session, database, collection)
+func Delete(ops *CollectionInfo, query interface{}) error {
+	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
