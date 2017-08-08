@@ -1,0 +1,6 @@
+*.log
+*.rdb
+*.pprof
+*.memprof
+.idea
+.vscode
