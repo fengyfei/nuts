@@ -27,7 +27,7 @@
  *     Initial: 2017/08/08        Jia Chenhui
  */
 
-package github
+package client
 
 import (
 	"context"
