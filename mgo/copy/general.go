@@ -35,19 +35,19 @@ import (
 )
 
 type CollectionInfo struct {
-	session     *mgo.Session
-	database    string
-	collection  string
-	index       *mgo.Index
+	Session    *mgo.Session
+	Database   string
+	Collection string
+	Index      *mgo.Index
 }
 
 func PrepareCollection(ops *CollectionInfo) (*mgo.Collection, chan struct{}) {
 	shutdown := make(chan struct{})
-	s := ops.session.Copy()
-	RefCollection := s.DB(ops.database).C(ops.collection)
+	s := ops.Session.Copy()
+	RefCollection := s.DB(ops.Database).C(ops.Collection)
 
-	if ops.index != nil {
-		if err := RefCollection.EnsureIndex(*ops.index); err != nil {
+	if ops.Index != nil {
+		if err := RefCollection.EnsureIndex(*ops.Index); err != nil {
 			panic(err)
 		}
 	}
