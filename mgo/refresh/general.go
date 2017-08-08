@@ -57,9 +57,9 @@ func GetUniqueOne(session *mgo.Session, collection *mgo.Collection, q interface{
 }
 
 // GetMany get multiple records based on a condition
-func GetMany(session *mgo.Session, coolection *mgo.Collection, q interface{}, doc interface{}) error {
+func GetMany(session *mgo.Session, collection *mgo.Collection, q interface{}, doc interface{}) error {
 	session.Refresh()
-	return coolection.Find(q).All(doc)
+	return collection.Find(q).All(doc)
 }
 
 // Insert add new documents to a collection.
