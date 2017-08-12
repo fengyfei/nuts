@@ -100,16 +100,18 @@ func (server *Server) Shutdown() {
 func (server *Server) start() {
 	go server.receive()
 
-	select {
-	case <-server.shutdown:
-		server.conn.Close()
-		return
+	for {
+		select {
+		case <-server.shutdown:
+			server.conn.Close()
+			return
 
-	case packet := <-server.sender:
-		_, err := server.conn.WriteToUDP(packet.Payload.Bytes(), packet.Remote)
+		case packet := <-server.sender:
+			_, err := server.conn.WriteToUDP(packet.Payload.Bytes(), packet.Remote)
 
-		if err != nil {
-			server.handler.OnError(err)
+			if err != nil {
+				server.handler.OnError(err)
+			}
 		}
 	}
 }
