@@ -30,34 +30,48 @@
 package packet
 
 import (
-	"bytes"
 	"net"
 )
 
 // Packet represents a UDP packet, including remote addr.
 type Packet struct {
-	Payload *bytes.Buffer
+	Payload []byte
+	Size    int
 	Remote  *net.UDPAddr
 }
 
 // NewPacket generates a Packet with a len([]byte) == cap.
 func NewPacket(cap int) *Packet {
 	return &Packet{
-		Payload: bytes.NewBuffer(make([]byte, cap)),
+		Payload: make([]byte, cap),
+		Size:    0,
 		Remote:  nil,
 	}
 }
 
 // Reset the underlying Buffer.
 func (p *Packet) Reset() {
-	cap := cap(p.Payload.Bytes())
-	p.Payload.Reset()
-	p.Payload.Grow(cap)
-
+	p.Size = 0
 	p.Remote = nil
 }
 
-// Resize the underlying Buffer.
-func (p *Packet) Resize(size int) {
-	p.Payload.Truncate(size)
+// Read from UDP connection.
+func (p *Packet) Read(conn *net.UDPConn) error {
+	size, remote, err := conn.ReadFromUDP(p.Payload)
+
+	if err != nil {
+		return err
+	}
+
+	p.Size = size
+	p.Remote = remote
+
+	return nil
+}
+
+// Write to UDP connection.
+func (p *Packet) Write(conn *net.UDPConn) error {
+	_, err := conn.WriteToUDP(p.Payload[:p.Size], p.Remote)
+
+	return err
 }

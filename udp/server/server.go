@@ -30,7 +30,6 @@
 package server
 
 import (
-	"bytes"
 	"net"
 
 	"github.com/fengyfei/nuts/udp/packet"
@@ -107,7 +106,7 @@ func (server *Server) start() {
 			return
 
 		case packet := <-server.sender:
-			_, err := server.conn.WriteToUDP(packet.Payload.Bytes(), packet.Remote)
+			err := packet.Write(server.conn)
 
 			if err != nil {
 				server.handler.OnError(err)
@@ -125,15 +124,11 @@ func (server *Server) receive() {
 		packet := server.buffer[index]
 		packet.Reset()
 
-		size, remote, err := server.conn.ReadFromUDP(packet.Payload.Bytes())
+		err := packet.Read(server.conn)
 
 		if err != nil {
 			server.handler.OnError(err)
 		} else {
-			// Discard the unused underlying storage.
-			packet.Resize(size)
-			packet.Remote = remote
-
 			server.handler.OnPacket(packet)
 		}
 
@@ -144,7 +139,8 @@ func (server *Server) receive() {
 // Send a message.
 func (server *Server) Send(payload []byte, remote *net.UDPAddr) error {
 	packet := &packet.Packet{
-		Payload: bytes.NewBuffer(payload),
+		Payload: payload,
+		Size:    len(payload),
 		Remote:  remote,
 	}
 
