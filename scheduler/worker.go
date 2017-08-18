@@ -47,12 +47,22 @@ func StartWorker(pool *Pool) {
 
 // Worker's main loop.
 func (w *Worker) work() {
+	wrapper := func(task Task) {
+		defer func() {
+			if r := recover(); r != nil {
+				return
+			}
+		}()
+
+		task.Do()
+	}
+
 	w.pool.workers <- w.task
 
 	for {
 		select {
 		case t := <-w.task:
-			t.Do()
+			wrapper(t)
 			w.pool.workers <- w.task
 		}
 	}
