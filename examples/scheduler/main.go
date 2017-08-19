@@ -59,5 +59,13 @@ func main() {
 		})
 	}
 
+	for i := 0; i < 100; i++ {
+		result := pool.ScheduleWithTimeout(&echo{
+			id: i,
+		}, time.Nanosecond)
+
+		fmt.Println("Schedule status:", result)
+	}
+
 	time.Sleep(5 * time.Second)
 }

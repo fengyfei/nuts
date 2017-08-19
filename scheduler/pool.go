@@ -31,6 +31,7 @@ package scheduler
 
 import (
 	"runtime"
+	"time"
 )
 
 // Pool caches tasks and schedule tasks to work.
@@ -80,9 +81,14 @@ func (p *Pool) Schedule(task Task) {
 }
 
 // ScheduleWithTimeout try to push a task on queue, if timeout, return false.
-func (p *Pool) ScheduleWithTimeout(task Task, timeout int) bool {
+func (p *Pool) ScheduleWithTimeout(task Task, timeout time.Duration) bool {
+	timer := time.NewTimer(timeout)
+
 	select {
 	case p.queue <- task:
+		timer.Stop()
 		return true
+	case <-timer.C:
+		return false
 	}
 }
