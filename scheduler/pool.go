@@ -30,8 +30,14 @@
 package scheduler
 
 import (
+	"errors"
 	"runtime"
 	"time"
+)
+
+var (
+	// ErrScheduleTimeout happens when task schedule failed during the specific interval.
+	ErrScheduleTimeout = errors.New("schedule not available currently")
 )
 
 // Pool caches tasks and schedule tasks to work.
@@ -81,14 +87,14 @@ func (p *Pool) Schedule(task Task) {
 }
 
 // ScheduleWithTimeout try to push a task on queue, if timeout, return false.
-func (p *Pool) ScheduleWithTimeout(task Task, timeout time.Duration) bool {
+func (p *Pool) ScheduleWithTimeout(timeout time.Duration, task Task) error {
 	timer := time.NewTimer(timeout)
 
 	select {
 	case p.queue <- task:
 		timer.Stop()
-		return true
+		return nil
 	case <-timer.C:
-		return false
+		return ErrScheduleTimeout
 	}
 }
