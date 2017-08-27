@@ -50,8 +50,8 @@ const (
 
 type GHClient struct {
 	Client     *GitHub.Client
-	rateLimits [categories]Rate
 	Manager    *ClientManager
+	rateLimits [categories]Rate
 	timer      *time.Timer
 	rateMu     sync.Mutex
 }
@@ -165,7 +165,7 @@ func (c *GHClient) isLimited() bool {
 	return true
 }
 
-// initTimer initialize client timers.
+// initTimer initialize client timer.
 func (c *GHClient) initTimer(resp *GitHub.Response) {
 	if resp != nil {
 		timer := time.NewTimer((*resp).Reset.Time.Sub(time.Now()) + time.Second*2)
@@ -192,65 +192,54 @@ func newClients(tokens []string) []*GHClient {
 }
 
 type ClientManager struct {
-	reclaim  chan *GHClient
 	Dispatch chan *GHClient
+	reclaim  chan *GHClient
 }
 
-// run reclaim the client.
-func (r *ClientManager) run(done chan bool) {
+// start start reclaim and dispatch the client.
+func (cm *ClientManager) start() {
 	for {
 		select {
-		case v := <-r.reclaim:
-			r.Dispatch <- v
-		case <-done:
-			break
+		case v := <-cm.reclaim:
+			cm.Dispatch <- v
 		}
 	}
-	close(r.Dispatch)
 }
 
-// NewClientManager create a new client manager based on tokens.
-func NewClientManager(tokens []string) *ClientManager {
-	var rb *ClientManager = &ClientManager{
+// NewManager create a new client manager based on tokens.
+func NewManager(tokens []string) *ClientManager {
+	var cm *ClientManager = &ClientManager{
 		reclaim:  make(chan *GHClient),
 		Dispatch: make(chan *GHClient, len(tokens)),
 	}
 
 	clients := newClients(tokens)
-	done := make(chan bool)
-	defer func() {
-		done <- true
-	}()
 
-	go rb.run(done)
+	go cm.start()
 	go func() {
 		for _, c := range clients {
 			if !c.isLimited() {
-				rb.reclaim <- c
+				c.Manager = cm
+				cm.reclaim <- c
 			}
 		}
 	}()
 
-	return rb
+	return cm
 }
 
-// GetClient get a client.
-func (m *ClientManager) GetClient() *GHClient {
-	for {
-		select {
-		case c := <-m.Dispatch:
-			return c
-		}
-	}
+// Dispatch dispatch a valid client.
+func (cm *ClientManager) Dispatch() *GHClient {
+	return <-cm.Dispatch
 }
 
-// PutClient put the client back to the manager.
+// Reclaim reclaim client while the client is valid.
 // resp: The response returned when calling the client.
-func PutClient(client *GHClient, resp *GitHub.Response) {
+func Reclaim(client *GHClient, resp *GitHub.Response) {
 	client.initTimer(resp)
 
-	<-client.timer.C
 	select {
-	case client.Manager.reclaim <- client:
+	case <-client.timer.C:
+		client.Manager.reclaim <- client
 	}
 }
