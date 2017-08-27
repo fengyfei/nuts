@@ -60,9 +60,9 @@ func main() {
 	}
 
 	for i := 0; i < 100; i++ {
-		result := pool.ScheduleWithTimeout(&echo{
+		result := pool.ScheduleWithTimeout(time.Nanosecond, &echo{
 			id: i,
-		}, time.Nanosecond)
+		})
 
 		fmt.Println("Schedule status:", result)
 	}
