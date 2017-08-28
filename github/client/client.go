@@ -191,9 +191,11 @@ func newClients(tokens []string) []*GHClient {
 	return clients
 }
 
+// ClientManager used to manage the valid client.
 type ClientManager struct {
 	Dispatch chan *GHClient
 	reclaim  chan *GHClient
+	shutdown chan struct{}
 }
 
 // start start reclaim and dispatch the client.
@@ -202,6 +204,10 @@ func (cm *ClientManager) start() {
 		select {
 		case v := <-cm.reclaim:
 			cm.Dispatch <- v
+		case <-cm.shutdown:
+			close(cm.Dispatch)
+			close(cm.reclaim)
+			return
 		}
 	}
 }
@@ -211,6 +217,7 @@ func NewManager(tokens []string) *ClientManager {
 	var cm *ClientManager = &ClientManager{
 		reclaim:  make(chan *GHClient),
 		Dispatch: make(chan *GHClient, len(tokens)),
+		shutdown: make(chan struct{}),
 	}
 
 	clients := newClients(tokens)
@@ -242,4 +249,9 @@ func Reclaim(client *GHClient, resp *GitHub.Response) {
 	case <-client.timer.C:
 		client.Manager.reclaim <- client
 	}
+}
+
+// Shutdown shutdown the client manager.
+func (cm *ClientManager) Shutdown() {
+	close(cm.shutdown)
 }
