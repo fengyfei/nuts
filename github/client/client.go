@@ -228,8 +228,8 @@ func NewManager(tokens []string) *ClientManager {
 	return cm
 }
 
-// Dispatch dispatch a valid client.
-func (cm *ClientManager) Dispatch() *GHClient {
+// Fetch fetch a valid client.
+func (cm *ClientManager) Fetch() *GHClient {
 	return <-cm.Dispatch
 }
 
