@@ -45,9 +45,9 @@ func IsValidObjectHex(id string) bool {
 }
 
 // GetByID get a single record by ID
-func GetByID(session *mgo.Session, collection *mgo.Collection, id string, i interface{}) {
+func GetByID(session *mgo.Session, collection *mgo.Collection, id interface{}, i interface{}) {
 	session.Refresh()
-	collection.FindId(bson.ObjectIdHex(id)).One(i)
+	collection.FindId(id).One(i)
 }
 
 // GetUniqueOne get a single record by query

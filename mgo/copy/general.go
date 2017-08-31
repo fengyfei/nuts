@@ -72,13 +72,18 @@ func IsValidObjectHex(id string) bool {
 }
 
 // GetByID get a single record by ID
-func GetByID(ops *CollectionInfo, id string, i interface{}) {
+func GetByID(ops *CollectionInfo, id interface{}, i interface{}) error {
 	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
 
-	col.FindId(bson.ObjectIdHex(id)).One(i)
+	err := col.FindId(id).One(i)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetUniqueOne get a single record by query
