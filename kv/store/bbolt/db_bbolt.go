@@ -30,12 +30,12 @@
 package store
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"encoding/json"
 
 	"github.com/coreos/bbolt"
-	
+
 	"github.com/fengyfei/nuts/kv"
 	"github.com/fengyfei/nuts/kv/general"
 )
