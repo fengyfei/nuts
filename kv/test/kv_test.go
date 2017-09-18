@@ -38,7 +38,7 @@ import (
 )
 
 func TestAlias_Init(t *testing.T) {
-	kv.DBStore.DB("user.db")
+	//kv.DBStore.DB("./user/user.db")
 
 	type S struct {
 		A string

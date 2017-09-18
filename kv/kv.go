@@ -74,5 +74,5 @@ func Register(driver string, init InitFun) {
 
 	dbManager.Store(d, init)
 
-	DBStore = init(driver)
+	DBStore = init(driver+".db")
 }
