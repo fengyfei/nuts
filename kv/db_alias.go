@@ -31,21 +31,26 @@ package kv
 
 import (
 	"sync"
-
-	"github.com/fengyfei/nuts/kv/general"
 )
-
-type DriverType int
 
 const (
 	DRBbolt DriverType = 0
 )
 
-type Alias struct {
-	general.Store
-}
+type (
+	DriverType int
+	InitFun func(name string) Store
+
+	Store interface {
+		DB(name string)
+		Put(bucket string, key interface{}, value interface{}) error //set session value
+		Get(bucket string, key interface{}) ([]byte, error)          //get session value
+		Delete(bucket string, key interface{}) error                 //delete session value
+	}
+)
 
 var (
+	DBStore Store
 	drivers = map[string]DriverType{
 		"bbolt": DRBbolt,
 	}
@@ -53,7 +58,7 @@ var (
 	dbManager = sync.Map{}
 )
 
-func Register(driver string, init general.InitFun) {
+func Register(driver string, init InitFun) {
 	if init == nil {
 		panic("store: Register init is nil")
 	}
@@ -68,12 +73,6 @@ func Register(driver string, init general.InitFun) {
 	}
 
 	dbManager.Store(d, init)
-}
 
-func (a *Alias) Init(name string) {
-	for _, i := range drivers {
-		if f, ok := dbManager.Load(i); ok {
-			a.Store = f.(general.InitFun)(name)
-		}
-	}
+	DBStore = init(driver)
 }

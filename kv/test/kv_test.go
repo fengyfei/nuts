@@ -33,32 +33,31 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/fengyfei/nuts/kv"
 	_ "github.com/fengyfei/nuts/kv/store/bbolt"
+	"github.com/fengyfei/nuts/kv"
 )
 
 func TestAlias_Init(t *testing.T) {
-	var alice *kv.Alias = new(kv.Alias)
-	alice.Init("user.db")
+	kv.DBStore.DB("user.db")
 
 	type S struct {
 		A string
 	}
 	test := S{"test"}
 
-	alice.Store.Put("user", 1234, "1234")
-	v, _ := alice.Store.Get("user", 1234)
+	kv.DBStore.Put("user", 1234, "1234")
+	v, _ := kv.DBStore.Get("user", 1234)
 	fmt.Println(string(v))
 
-	alice.Store.Put("user", "1234", 1234)
-	v, _ = alice.Store.Get("user", "1234")
+	kv.DBStore.Put("user", "1234", 1234)
+	v, _ = kv.DBStore.Get("user", "1234")
 	fmt.Println(string(v))
 
-	alice.Store.Put("user", test, "test")
-	v, _ = alice.Store.Get("user", test)
+	kv.DBStore.Put("user", test, "test")
+	v, _ = kv.DBStore.Get("user", test)
 	fmt.Println(string(v))
 
-	alice.Store.Delete("user", test)
-	v, _ = alice.Store.Get("user", test)
+	kv.DBStore.Delete("user", test)
+	v, _ = kv.DBStore.Get("user", test)
 	fmt.Println(string(v))
 }

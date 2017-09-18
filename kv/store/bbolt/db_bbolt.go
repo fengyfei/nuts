@@ -37,7 +37,6 @@ import (
 	"github.com/coreos/bbolt"
 
 	"github.com/fengyfei/nuts/kv"
-	"github.com/fengyfei/nuts/kv/general"
 )
 
 type dbBaseBbolt struct {
@@ -48,10 +47,14 @@ func init() {
 	kv.Register("bbolt", NewBbolt)
 }
 
-func NewBbolt(name string) general.Store {
+func NewBbolt(name string) kv.Store {
 	db := new(dbBaseBbolt)
 	db.init(name)
 	return db
+}
+
+func (bb *dbBaseBbolt) DB(name string) {
+	bb.init(name)
 }
 
 func (bb *dbBaseBbolt) init(path string) error {
