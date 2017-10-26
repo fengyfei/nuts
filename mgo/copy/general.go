@@ -160,3 +160,15 @@ func Delete(ops *CollectionInfo, query interface{}) error {
 
 	return col.Remove(query)
 }
+
+// IterAll prepares a pipeline to aggregate and executes the pipeline, works like Iter.All.
+func IterAll(ops *CollectionInfo, pipeline interface{}, i interface{}) error {
+	col, shutdown := PrepareCollection(ops)
+	defer func() {
+		close(shutdown)
+	}()
+
+	pipe := col.Pipe(pipeline)
+
+	return pipe.All(i)
+}
