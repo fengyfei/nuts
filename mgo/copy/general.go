@@ -96,14 +96,19 @@ func GetUniqueOne(ops *CollectionInfo, q interface{}, doc interface{}) error {
 	return col.Find(q).One(doc)
 }
 
-// GetMany get multiple records based on a condition
-func GetMany(ops *CollectionInfo, q interface{}, doc interface{}) error {
+// GetMany get multiple records based on a condition, to order returned documents according to the
+// provided field names.
+func GetMany(ops *CollectionInfo, q interface{}, doc interface{}, fields ...string) error {
 	col, shutdown := PrepareCollection(ops)
 	defer func() {
 		close(shutdown)
 	}()
 
-	return col.Find(q).All(doc)
+	if len(fields) == 0 {
+		return col.Find(q).All(doc)
+	}
+
+	return col.Find(q).Sort(fields...).All(doc)
 }
 
 // Insert add new documents to a collection.
