@@ -177,3 +177,18 @@ func IterAll(ops *CollectionInfo, pipeline interface{}, i interface{}) error {
 
 	return pipe.All(i)
 }
+
+// GetLimitedRecords obtain records based on specified conditions.
+// The results of the specified number of returns are sorted by the specified fields.
+func GetLimitedRecords(ops *CollectionInfo, q interface{}, n int, doc interface{}, fields ...string) error {
+	col, shutdown := PrepareCollection(ops)
+	defer func() {
+		close(shutdown)
+	}()
+
+	if len(fields) == 0 {
+		return col.Find(q).Limit(n).All(doc)
+	}
+
+	return col.Find(q).Sort(fields...).Limit(n).All(doc)
+}
